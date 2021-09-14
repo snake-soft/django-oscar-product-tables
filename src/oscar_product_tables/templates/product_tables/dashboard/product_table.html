@@ -1,0 +1,48 @@
+{% extends 'oscar/dashboard/layout.html' %}
+{% load form_tags %}
+{% load i18n %}
+{% load static %}
+{% load display_datatype_filters %}
+{% load render_table from django_tables2 %}
+
+{% block body_class %}{{ block.super }}{% endblock %}
+
+{% block title %}
+    {{ title }} | {% trans "Producttable" %} | {{ block.super }}
+{% endblock %}
+
+{% block extrascripts %}
+    {{ block.super }}
+    <script src="{% static 'product_tables/js/product_tables.js' %}?ver=1"></script>
+    <script>
+    	var ajaxFormUrl="{% url 'product_tables_dashboard:product-table-ajax' %}";
+    	var ajaxFormSubmitUrl="{{ request.path}}";
+    </script>
+{% endblock %}
+
+{% block breadcrumbs %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard:index' %}">{% trans "Dashboard" %}</a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'dashboard:catalogue-product-list' %}">{% trans "Producttable" %}</a>
+            </li>
+            {% if parent %}
+                <li class="breadcrumb-item">
+                    <a href="{% url 'dashboard:catalogue-product' parent.id %}">{{ parent.title }}</a>
+                </li>
+            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ title }}
+            </li>
+        </ol>
+     </nav>
+{% endblock %}
+
+{% block headertext %}{{ title }}{% endblock %}
+
+{% block dashboard_content %}
+  {% include '../table.html' %}
+{% endblock dashboard_content %}

@@ -1,0 +1,43 @@
+{% load form_tags %}
+{% load i18n %}
+{% load static %}
+{% load display_datatype_filters %}
+{% load currency_filters %}
+
+<style>
+.cell:hover{
+  font-weight: bold;
+  background-color: #f7f7f7;
+}
+</style>
+
+<table class="table table-hover table-sm table-responsive-md">
+  <thead>
+    <tr class="sticky-top bg-light">
+      {% for col in table.cols %}
+        <th scope="col" data-code="{{ col.code }}">{{ col.name }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in table.rows %}
+      <tr data-productid="{{ row.product.id }}">
+        {% for cell in row.cells %}
+          {% if cell.code == 'upc' %}
+            <th style="position: sticky;">
+              <a href="{% url 'dashboard:catalogue-product' row.product.id %}">
+                {{ cell.data|display }}
+              </a>
+            </th>
+          {% elif cell.enabled %}
+            <td class="cell" onclick="getForm($(this));" style="cursor:pointer;">
+              {{ cell.data|display }}
+            </td>
+          {% else %}
+            <td style="color:#eee;cursor:no-drop;">n/a</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
