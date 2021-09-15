@@ -38,6 +38,7 @@ Install using pip:
 
 
 .. code-block:: python
+
    # settings.py
    INSTALLED_APPS = [
        # ...
@@ -48,7 +49,9 @@ Install using pip:
 
 
 Add it as first button of catalogue in dashboard:
+
 .. code-block:: python
+
    # settings.py
    OSCAR_DASHBOARD_NAVIGATION[1]['children'] = [
        {
@@ -65,5 +68,6 @@ Settings
 If you want to add some fields that are directly attached to the Product model:
 
 .. code-block:: python
+
    # settings.py
    OSCAR_ATTACHED_PRODUCT_FIELDS = ['is_public', 'deposit', 'volume', 'weight',]
