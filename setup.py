@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from setuptools import find_packages, setup
+from oscar_product_tables import __version__
+
 
 install_requires = [
     'django>=2.2,<3.3',
@@ -18,13 +20,12 @@ tests_require = [
     'tox>=3.17,<3.21',
 ]
 
-
 setup(
     name='django-oscar-product-tables',
-    version='0.9.0',
+    version=__version__,
     author="Snake-Soft",
     author_email="info@snake-soft.com",
-    description="Manage products, attributevalues and prices on one table",
+    description="Manage products, their attributevalues and prices on one dynamic table",
     long_description=open('README.rst').read(),
     license='BSD',
     package_dir={'': 'src'},

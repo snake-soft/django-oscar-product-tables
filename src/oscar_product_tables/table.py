@@ -85,6 +85,10 @@ class Table:
             'stockrecords',
             'stockrecords__partner',
         )
+        for field in self.get_attached_field_codes():
+            if Product._meta.get_field(field).is_relation:
+                qs = qs.select_related(field)
+
         #qs = qs[:100]
         #qs = qs.order_by('?')[:100]
         qs = qs.order_by('title')#[:100]
