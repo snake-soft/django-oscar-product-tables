@@ -47,6 +47,16 @@ Install using pip:
        # ...
    ]
 
+Create urls:
+
+.. code-block:: python
+
+   urlpatterns = [
+       # ..
+       path('dashboard/product_tables/', apps.get_app_config('product_tables_dashboard').urls),
+       # ..
+   ]
+
 
 Add it as first button of catalogue in dashboard:
 
