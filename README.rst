@@ -1,3 +1,7 @@
+.. image:: https://api.codeclimate.com/v1/badges/b4282da53f20d20618aa/maintainability
+   :target: https://codeclimate.com/github/snake-soft/django-oscar-product-tables/maintainability
+   :alt: Maintainability
+
 ==============================
 Product Table for Django-Oscar
 ==============================
