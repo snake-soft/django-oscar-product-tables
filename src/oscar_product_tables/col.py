@@ -8,3 +8,9 @@ class Col:
 
     def filter(self, product_qs):
         return product_qs
+
+    def __repr__(self):
+        return 'Col:' + str(self)
+
+    def __str__(self):
+        return self.code

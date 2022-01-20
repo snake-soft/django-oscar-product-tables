@@ -30,7 +30,7 @@ class ProductTableAjaxView(FormView):
         self.product = Product.objects.get(id=product_id)
         self.code = code
         self.previous_data = None
-        self.table = Table()
+        self.table = Table(product=self.product)
         super().setup(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):

@@ -8,3 +8,9 @@ class Row:
 
     def add_cell(self, cell):
         self.cells.append(cell)
+
+    def __repr__(self):
+        return 'Row:' + str(self)
+
+    def __str__(self):
+        return str(self.product.id)

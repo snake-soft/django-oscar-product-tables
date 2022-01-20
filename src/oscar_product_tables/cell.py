@@ -9,7 +9,7 @@ class CellBase:
     type = None
     enabled = True
 
-    def __init__(self, row, col):
+    def __init__(self, row, col, obj=None):
         self.row = row
         self.col = col
         self.name = col.name
@@ -23,6 +23,12 @@ class CellBase:
     @property
     def field(self):
         raise NotImplementedError()
+
+    def __repr__(self):
+        return 'Cell:{}:{}'.format(self.product.upc, str(self))
+
+    def __str__(self):
+        return self.code
 
 
 class AttachedCell(CellBase):
@@ -38,11 +44,12 @@ class AttachedCell(CellBase):
         field.initial = getattr(self.product, self.code)
         return field
 
+
 class AttributeCell(CellBase):
     type = 'attribute'
 
-    def __init__(self, attribute, *args, **kwargs):
-        self.attribute = attribute
+    def __init__(self, obj, *args, **kwargs):
+        self.attribute = obj
         super().__init__(*args, **kwargs)
 
     @property
@@ -77,8 +84,8 @@ class AttributeCell(CellBase):
 class PartnerCell(CellBase):
     type = 'partner'
 
-    def __init__(self, partner, *args, **kwargs):
-        self.partner = partner
+    def __init__(self, obj, *args, **kwargs):
+        self.partner = obj
         super().__init__(*args, **kwargs)
 
     @property
