@@ -21,7 +21,11 @@ function getForm(td){
 	}).done(function(){
 			var form = td.find('form');
 			var field = form.find('.form-control').first();
-			field.select();
+			if (field.is('select')){
+				field.select2();
+			}else{
+				field.select();
+			}
 	});
 }
 

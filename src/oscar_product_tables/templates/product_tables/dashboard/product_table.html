@@ -13,7 +13,7 @@
 
 {% block extrascripts %}
     {{ block.super }}
-    <script src="{% static 'product_tables/js/product_tables.js' %}?ver=1"></script>
+    <script src="{% static 'product_tables/js/product_tables.js' %}?ver=2"></script>
     <script>
     	var ajaxFormUrl="{% url 'product_tables_dashboard:product-table-ajax' %}";
     	var ajaxFormSubmitUrl="{{ request.path}}";
