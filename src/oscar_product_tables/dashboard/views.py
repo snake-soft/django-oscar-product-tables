@@ -25,7 +25,7 @@ class GetTableMixin:
 
 
 class ProductTableView(TemplateView, GetTableMixin):
-    template_name = 'sync/product_table.html'
+    template_name = 'product_tables/dashboard/product_table.html'
     template_name_table = 'product_tables/table.html'
     http_method_names = ['get']
 
