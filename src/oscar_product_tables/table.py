@@ -21,7 +21,6 @@ class FieldsPluginBase:
         self.objects = {obj.code: obj for obj in self.get_queryset()}
         self.cols = [*self.get_cols()]
         self.rows = self.add_cells_to_rows(rows)
-        print(self.cell_class, 'executed')
     
     def add_cells_to_rows(self, rows):
         for row in rows:
