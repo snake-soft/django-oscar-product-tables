@@ -10,19 +10,33 @@ Partner = get_model('partner','Partner')
 StockRecord = get_model('partner','StockRecord')
 
 
-class ProductTableView(TemplateView):
-    template_name = 'product_tables/dashboard/product_table.html'
+class GetTableMixin:
+    def get_table(self, **additional_kwargs):
+        """ Overwrite when using another plugin set """
+        return Table(**self.get_table_kwargs(**additional_kwargs))
+
+    def get_table_kwargs(self, **additional_kwargs):
+        """ Overwrite when using another plugin_classes set """
+        kwargs = {'plugin_classes': []}
+        if hasattr(self, 'product'):
+            kwargs.update({'product': self.product})
+        kwargs.update(additional_kwargs)
+        return kwargs
+
+
+class ProductTableView(TemplateView, GetTableMixin):
+    template_name = 'sync/product_table.html'
     template_name_table = 'product_tables/table.html'
     http_method_names = ['get']
 
     def get_context_data(self, **kwargs):
         context = {**kwargs}
-        table = Table()
+        table = self.get_table()
         context['table'] = table
         return context
 
 
-class ProductTableAjaxView(FormView):
+class ProductTableAjaxView(FormView, GetTableMixin):
     http_method_names = ['get', 'post']
     form_class = ProductFieldForm
 
@@ -30,7 +44,7 @@ class ProductTableAjaxView(FormView):
         self.product = Product.objects.get(id=product_id)
         self.code = code
         self.previous_data = None
-        self.table = Table(product=self.product)
+        self.table = self.get_table()
         super().setup(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -66,6 +80,6 @@ class ProductTableAjaxView(FormView):
                 self.previous_data = form.cell.data
                 form.save()
                 # Reinitialize table to get new field data
-                self.table = Table(product=self.product)
+                self.table = self.get_table()
                 return self.get(request, product_id, code, *args, **kwargs)
         return super().post(request, *args, **kwargs)

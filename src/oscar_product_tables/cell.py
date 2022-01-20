@@ -7,6 +7,8 @@ ProductAttributeValue = get_model('catalogue', 'ProductAttributeValue')
 StockRecord = get_model('partner','StockRecord')
 Partner = get_model('partner','Partner')
 
+__all__ = ['AttachedCell', 'AttributeCell', 'PartnerCell']
+
 
 class CellBase:
     type = None
