@@ -42,40 +42,6 @@ class ProductFieldForm(forms.Form):
         self.fields[self.code] = self.field
 
     def save(self):
-        product = self.cell.product
         code = self.cleaned_data['code']
         value = self.cleaned_data[code]
-        updated = False
-
-        if self.cell.type == 'attached':
-            if getattr(product, code) != value:
-                setattr(product, code, value)
-                product.save()
-                updated = True
-
-        elif self.cell.type == 'attribute':
-            attribute = product.product_class.attributes.get(code=self.code)
-            if isinstance(value, AttributeOption):
-                updated = ProductAttributeValue.objects.update_or_create(
-                    attribute=attribute,
-                    product=product,
-                    defaults={
-                        'value_option': value,
-                    },
-                )[0]
-            else:
-                updated = ProductAttributeValue.objects.filter(
-                    attribute=attribute,product=product
-                ).delete()[0]
-
-        elif self.cell.type == 'partner':
-            if value is not None:
-                partner = Partner.objects.get(code=code)
-                updated = StockRecord.objects.update_or_create(
-                    partner=partner,
-                    product=product,
-                    defaults={
-                        'price': value,
-                    }
-                )[0]
-        return updated
+        self.cell.save(code, value)

@@ -64,8 +64,8 @@ class ProductTableAjaxView(FormView):
         if action == 'save':
             if form.is_valid():
                 self.previous_data = form.cell.data
-                updated = form.save()
-                if not updated:
-                    self.previous_data = None
+                form.save()
+                # Reinitialize table to get new field data
+                self.table = Table(product=self.product)
                 return self.get(request, product_id, code, *args, **kwargs)
         return super().post(request, *args, **kwargs)
