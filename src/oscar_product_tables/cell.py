@@ -52,7 +52,11 @@ class AttachedCell(CellBase):
 
     @property
     def data(self):
-        return getattr(self.product, self.code)
+        field = Product._meta.get_field(self.code)
+        value = getattr(self.product, self.code)
+        if field.choices:
+            value = dict(field.choices).get(value, value)
+        return value
 
     @property
     def field(self):
