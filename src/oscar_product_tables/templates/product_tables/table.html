@@ -4,14 +4,23 @@
 {% load display_datatype_filters %}
 {% load currency_filters %}
 
+{% block extrahead %}
+  <script src="https://unpkg.com/htmx.org@1.6.1" integrity="sha384-tvG/2mnCFmGQzYC1Oh3qxQ7CkQ9kMzYjWZSNtrRZygHPDDqottzEJsqS4oUVodhW" crossorigin="anonymous"></script>
+{% endblock %}
+
 <style>
-.cell:hover{
-  font-weight: bold;
+#producttable td:hover{
+  text-decoration: underline;
   background-color: #f7f7f7;
+  cursor:pointer;
+}
+#producttable td{
+  white-space:nowrap;
+  border-right: 1px dotted lightgrey;
 }
 </style>
 
-<table class="table table-hover table-sm table-responsive-md">
+<table id="producttable" class="table table-hover table-sm table-responsive-md">
   <thead>
     <tr class="sticky-top bg-light">
       {% for col in table.cols %}
@@ -30,7 +39,7 @@
               </a>
             </th>
           {% elif cell.enabled %}
-            <td class="cell" onclick="getForm($(this));" style="cursor:pointer;">
+            <td onclick="getForm($(this));">
               {{ cell.data|display }}
             </td>
           {% else %}
