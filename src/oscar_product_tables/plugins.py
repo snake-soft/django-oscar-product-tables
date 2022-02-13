@@ -59,9 +59,14 @@ class AttachedFieldsPlugin(FieldsPluginBase):
         cols = []
         for code in self.get_fieldnames():
             field = Product._meta.get_field(code)
-            cols.append(
-                Col(field.name, Product._meta.get_field(code).verbose_name))
+            cols.append(Col(field.name, self.get_field_label(field)))
         return cols
+
+    @staticmethod
+    def get_field_label(field):
+        if field.related_model:
+            return field.related_model._meta.verbose_name
+        return field.verbose_name
 
     @classmethod
     def get_fieldnames(cls):
