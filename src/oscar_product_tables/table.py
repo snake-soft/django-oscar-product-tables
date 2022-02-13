@@ -13,9 +13,9 @@ class Table:
         PartnerFieldsPlugin,
     ]
 
-    def __init__(self, plugin_classes=None, product=None):
+    def __init__(self, plugin_classes=None, product=None, queryset=None):
         plugin_classes = plugin_classes or self.all_plugin_classes
-        self.products = self.get_queryset(plugin_classes, product)
+        self.products = queryset or self.get_queryset(plugin_classes, product)
         self.rows = [Row(product) for product in self.products]
         self.plugins = [cls(self.rows) for cls in plugin_classes]
         self.cols = [*self.get_cols()]
@@ -34,10 +34,13 @@ class Table:
         qs = qs.order_by('title')
         return qs
 
-    def get_field(self, product, code):
+    def get_row(self, product):
         for row in self.rows:
             if row.product == product:
-                break
+                return row
+
+    def get_field(self, product, code):
+        row = self.get_row(product)
         for cell in row.cells:
             if cell.code == code:
                 return cell
