@@ -1,10 +1,4 @@
 from django import forms
-from oscar.core.loading import get_model
-
-ProductAttributeValue = get_model('catalogue', 'ProductAttributeValue')
-AttributeOption = get_model('catalogue', 'AttributeOption')
-Partner = get_model('partner','Partner')
-StockRecord = get_model('partner','StockRecord')
 
 
 class ProductFieldForm(forms.Form):
@@ -20,15 +14,11 @@ class ProductFieldForm(forms.Form):
         else:
             super().__init__(auto_id=auto_id)
         self.cell = cell
-
-        self.field = self.get_field()
         self.initialize_fields()
         self.is_valid()
 
-    def get_field(self):
-        field = self.cell.field
-        field.widget.attrs['class'] = 'form-control'
-        return field
+    def get_fields(self):
+        return self.cell.fields
 
     def initialize_fields(self):
         self.fields['productid'] = forms.IntegerField(
@@ -39,9 +29,9 @@ class ProductFieldForm(forms.Form):
             widget=forms.HiddenInput(),
             initial=self.cell.code,
         )
-        self.fields[self.code] = self.field
+        self.fields.update(self.get_fields())
 
     def save(self):
-        code = self.cleaned_data['code']
-        value = self.cleaned_data[code]
-        self.cell.save(code, value)
+        field_codes = self.cell.fields.keys()
+        data = {k: v for k, v in self.cleaned_data.items() if k in field_codes}
+        self.cell.save(**data)

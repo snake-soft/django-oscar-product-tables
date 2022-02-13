@@ -1,4 +1,8 @@
+from typing import Dict
 from django.utils.functional import cached_property
+from django.contrib.sites.models import Site
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from oscar.core.loading import get_model
 from oscar.apps.dashboard.catalogue.forms import ProductForm
 
@@ -29,7 +33,11 @@ class CellBase:
     def field(self):
         raise NotImplementedError()
 
-    def save(self, code, value):
+    @property
+    def fields(self) -> Dict:
+        return {self.code: self.field}
+
+    def save(self, **data):
         raise NotImplementedError()
 
     def __repr__(self):
@@ -52,10 +60,11 @@ class AttachedCell(CellBase):
         field.initial = getattr(self.product, self.code)
         return field
 
-    def save(self, code, value):
-        if getattr(self.product, code) != value:
-            setattr(self.product, code, value)
-            self.product.save()
+    def save(self, **data):
+        for code, value in data.items():
+            if getattr(self.product, code) != value:
+                setattr(self.product, code, value)
+                self.product.save()
 
 
 class AttributeCell(CellBase):
@@ -96,73 +105,107 @@ class AttributeCell(CellBase):
             product_attributes[attribute_code] = value
         return product_attributes
 
-    def save(self, code, value):
-        attribute = self.product.product_class.attributes.get(code=self.code)
-        if attribute.type == 'option':
-            if value:
-                ProductAttributeValue.objects.update_or_create(
-                    attribute=attribute,
-                    product=self.product,
-                    defaults={
-                        'value_option': value,
-                    },
-                )[0]
+    def save(self, **data):
+        for code, value in data.items():
+            attribute = self.product.product_class.attributes.get(code=code)
+            if attribute.type == 'option':
+                if value:
+                    ProductAttributeValue.objects.update_or_create(
+                        attribute=attribute,
+                        product=self.product,
+                        defaults={
+                            'value_option': value,
+                        },
+                    )[0]
+                else:
+                    ProductAttributeValue.objects.filter(
+                        attribute=attribute,
+                        product=self.product,
+                    ).delete()
+            elif attribute.type == 'multi_option':
+                if value:
+                    val = ProductAttributeValue.objects.get_or_create(
+                        attribute=attribute,
+                        product=self.product,
+                    )[0]
+                    val.value_multi_option.set(value)
+                else:
+                    ProductAttributeValue.objects.filter(
+                        attribute=attribute,
+                        product=self.product,
+                    ).delete()
             else:
                 ProductAttributeValue.objects.filter(
-                    attribute=attribute,
-                    product=self.product,
+                    attribute=attribute, product=self.product
                 ).delete()
-        elif attribute.type == 'multi_option':
-            if value:
-                val = ProductAttributeValue.objects.get_or_create(
-                    attribute=attribute,
-                    product=self.product,
-                )[0]
-                val.value_multi_option.set(value)
-            else:
-                ProductAttributeValue.objects.filter(
-                    attribute=attribute,
-                    product=self.product,
-                ).delete()
-        else:
-            ProductAttributeValue.objects.filter(
-                attribute=attribute, product=self.product
-            ).delete()
 
 
 class PartnerCell(CellBase):
-    type = 'partner'
+    type = 'price'
 
     def __init__(self, obj, *args, **kwargs):
         self.partner = obj
+        assert obj
         super().__init__(*args, **kwargs)
+        #self.type = self.code.split('__')[1]
+
+    @property
+    def show_sku(self):
+        #return False
+        site = Site.objects.get_current()
+        if getattr(site, 'configuration', None):  # Domain specific
+            return getattr(site.configuration, 'own_upc', False)
+        if hasattr(settings, 'DATATABLES_SHOW_SKU'):
+            return settings.DATATABLES_SHOW_SKU
+        return False
 
     @property
     def data(self):
-        return self.stockrecords.get(self.code, None)
+        if self.stockrecord:
+            if self.show_sku:
+                return f'{self.stockrecord.partner_sku} > {self.stockrecord.price}€'
+            return f'{self.stockrecord.price}€'
+        return '-'
+
+    @property
+    def fields(self)->Dict:
+        fields = {}
+        if self.show_sku:
+            field = StockRecord._meta.get_field('partner_sku').formfield()
+            field.widget.attrs['placeholder'] = _('Art.Nr.')
+            field.required = False
+            if self.stockrecord:
+                field.initial = getattr(self.stockrecord, 'partner_sku')
+            fields[f'partner_sku'] = field
+
+        field = StockRecord._meta.get_field('price').formfield()
+        field.widget.attrs['placeholder'] = _('Preis')
+        field.required = False
+        if self.stockrecord:
+            field.initial = getattr(self.stockrecord, 'price')
+        fields[f'price'] = field
+        return fields
+
+    @property
+    def stockrecord(self):
+        return self.stockrecords.get(self.partner.pk, None)
 
     @cached_property
     def stockrecords(self):
-        return {stockrecord.partner.code: stockrecord.price
+        return {stockrecord.partner.pk: stockrecord
                 for stockrecord in self.product.stockrecords.all()}
 
-    @property
-    def field(self):
-        field = StockRecord._meta.get_field('price').formfield()
-        stockrecord = self.stockrecords.get(self.code, None)
-        if stockrecord is not None:
-            field.initial = stockrecord
-        return field
+    def save(self, **data):
+        partner = self.partner #Partner.objects.get(code=code)
+        if not getattr(data, 'partner_sku', None):
+            data['partner_sku'] = self.product.upc
 
-    def save(self, code, value):
-        partner = Partner.objects.get(code=code)
-        if value is None:
-            StockRecord.objects.filter(partner=partner, product=self.product
-                                       ).delete()
-        StockRecord.objects.update_or_create(
-            partner=partner,
-            product=self.product,
-            defaults={
-                'price': value,
-            }
-        )
+        if data['price'] is None:
+            StockRecord.objects.filter(
+                partner__pk=partner.pk, product=self.product).delete()
+        else:
+            StockRecord.objects.update_or_create(
+                partner=partner,
+                product=self.product,
+                defaults=data
+            )
