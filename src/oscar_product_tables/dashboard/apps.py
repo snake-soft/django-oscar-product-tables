@@ -24,6 +24,11 @@ class ProductTablesDashboardConfig(OscarDashboardConfig):
                 self.product_table_view.as_view(),
                 name='product-table'
             ),
+            path(
+                'product_table/<slug:slug>/',
+                self.product_table_view.as_view(),
+                name='product-table'
+            ),
 
             # Trick to set product_id and slug later:
             path(

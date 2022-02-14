@@ -18,35 +18,32 @@
   white-space:nowrap;
   border-right: 1px dotted lightgrey;
 }
+#producttable td.read_only{
+  cursor:no-drop;
+  text-decoration: unset;
+}
 </style>
 
-<table id="producttable" class="table table-hover table-sm table-responsive-md">
+<form>
+  <table>
+    {{ form.as_table }}
+  </table>
+</form>
+
+<div id="producttable-progress" class="progress"  style="height: 3px;">
+  <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%">
+  </div>
+</div>
+
+<table id="producttable" class="table table-hover table-sm table-responsive-md" style="display:none;">
   <thead>
     <tr class="sticky-top bg-light">
       {% for col in table.cols %}
-        <th scope="col" data-code="{{ col.code }}">{{ col.name }}</th>
+        <th style="position: sticky;" scope="col" data-code="{{ col.code }}">{{ col.name }}</th>
       {% endfor %}
     </tr>
   </thead>
   <tbody>
-    {% for row in table.rows %}
-      <tr data-productid="{{ row.product.id }}">
-        {% for cell in row.cells %}
-          {% if cell.code == 'upc' %}
-            <th style="position: sticky;">
-              <a href="{% url 'dashboard:catalogue-product' row.product.id %}">
-                {{ cell.data|display }}
-              </a>
-            </th>
-          {% elif cell.enabled %}
-            <td onclick="getForm($(this));">
-              {{ cell.data|display }}
-            </td>
-          {% else %}
-            <td style="color:#eee;cursor:no-drop;">n/a</td>
-          {% endif %}
-        {% endfor %}
-      </tr>
-    {% endfor %}
+    {% include './table_page.html' %}
   </tbody>
 </table>

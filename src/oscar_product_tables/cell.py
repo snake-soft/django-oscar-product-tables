@@ -18,7 +18,8 @@ class CellBase:
     type = None
     enabled = True
 
-    def __init__(self, row, col, obj=None):  # @UnusedVariable
+    def __init__(self, row, col, obj=None, read_only=False):  # @UnusedVariable
+        self.read_only = read_only
         self.row = row
         self.col = col
         self.name = col.name
@@ -201,7 +202,7 @@ class PartnerCell(CellBase):
 
     def save(self, **data):
         partner = self.partner #Partner.objects.get(code=code)
-        if not getattr(data, 'partner_sku', None):
+        if not data.get('partner_sku', None):
             data['partner_sku'] = self.product.upc
 
         if data['price'] is None:

@@ -1,16 +1,39 @@
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
+from django.core.paginator import Paginator
 from oscar_product_tables.forms import ProductFieldForm
 from oscar.core.loading import get_model
+from oscar_product_tables.plugins import *
+from ..forms import TableConfigForm
 from ..table import Table
 
 Product = get_model('catalogue', 'Product')
+Category = get_model('catalogue', 'Category')
 ProductAttribute = get_model('catalogue', 'ProductAttribute')
 Partner = get_model('partner','Partner')
 StockRecord = get_model('partner','StockRecord')
 
 
 class GetTableMixin:
+    template_name = 'product_tables/dashboard/product_table.html'
+    template_name_table = 'product_tables/table.html'
+    template_name_table_page = 'product_tables/table_page.html'
+    paginate_by = 1000
+    categories = []
+
+    def get_plugin_classes(self):
+        return [
+            AttachedFieldsPlugin,
+            AttributeFieldsPlugin,
+            PartnerFieldsPlugin,
+        ]
+
+    def get_disabled_plugins(self):
+        return []
+
+    def get_read_only_plugins(self):
+        return []
+
     def get_table(self, **additional_kwargs):
         """ Overwrite when using another plugin set """
         return Table(**self.get_table_kwargs(**additional_kwargs))
@@ -21,22 +44,51 @@ class GetTableMixin:
         if hasattr(self, 'product'):
             kwargs.update({'product': self.product})
         kwargs.update(additional_kwargs)
+        kwargs['read_only'] = self.get_read_only_plugins()
+        kwargs['disabled'] = self.get_disabled_plugins()
         return kwargs
 
-
-class ProductTableView(TemplateView, GetTableMixin):
-    template_name = 'product_tables/dashboard/product_table.html'
-    template_name_table = 'product_tables/table.html'
-    http_method_names = ['get']
-
     def get_context_data(self, **kwargs):
-        context = {**kwargs}
-        table = self.get_table()
-        context['table'] = table
+        if self.categories:
+            qs = self.get_queryset().filter(categories__in=self.categories).distinct()
+        else:
+            qs = self.get_queryset().none()
+        paginator = Paginator(qs, self.paginate_by)
+        site_nr = self.request.GET.get('page', 1)
+        page = paginator.page(site_nr)
+        context = super().get_context_data(**kwargs)
+        context['table'] = self.get_table(queryset=page.object_list)
+        context['page'] = page
+        context['progress'] = int(page.number / page.paginator.num_pages * 100)
+        if not 'page' in self.request.GET:
+            context['form'] = TableConfigForm(self.request)
         return context
 
+    def get_queryset(self):
+        return Product.objects.browsable_dashboard().order_by('title')
 
-class ProductTableAjaxView(FormView, GetTableMixin):
+    def get_template_names(self):
+        if 'page' in self.request.GET:
+            return self.template_name_table_page
+        return self.template_name
+
+    def user_is_allowed(self, user):
+        return user.is_superuser
+
+    def dispatch(self, request, *args, slug=None, **kwargs):
+        if not self.user_is_allowed(request.user):
+            raise AttributeError('Not allowed for user ' + request.user)
+        if slug:
+            category = Category.objects.get(slug=slug)
+            self.categories = category.get_descendants_and_self()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ProductTableView(GetTableMixin, TemplateView):
+    http_method_names = ['get']
+
+
+class ProductTableAjaxView(GetTableMixin, FormView):
     http_method_names = ['get', 'post']
     form_class = ProductFieldForm
 

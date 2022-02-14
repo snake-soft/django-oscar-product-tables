@@ -13,25 +13,40 @@ class Table:
         PartnerFieldsPlugin,
     ]
 
-    def __init__(self, plugin_classes=None, product=None, queryset=None):
+    def __init__(self, queryset=None, plugin_classes=None, product=None,
+                 read_only=None, disabled=None):
+        assert queryset is not None or product
+        self.read_only = read_only or []
+        self.disabled = disabled or []
         plugin_classes = plugin_classes or self.all_plugin_classes
-        self.products = queryset or self.get_queryset(plugin_classes, product)
+        self.products = self.get_queryset(plugin_classes, queryset, product)
         self.rows = [Row(product) for product in self.products]
-        self.plugins = [cls(self.rows) for cls in plugin_classes]
-        self.cols = [*self.get_cols()]
+        self.plugins = self.get_plugins(plugin_classes)
+        self.cols = self.get_cols()
+
+    def get_plugins(self, plugin_classes):
+        plugins = []
+        for cls in plugin_classes:
+            if cls not in self.disabled:
+                plugins.append(cls(self.rows, read_only=cls in self.read_only))
+        return plugins
 
     def get_cols(self):
+        cols = []
         for plugin in self.plugins:
             for col in plugin.cols:
-                yield col
+                cols.append(col)
+        return cols
 
-    def get_queryset(self, plugin_classes, product=None):
-        qs = Product.objects.browsable_dashboard()
+    def get_queryset(self, plugin_classes, queryset, product):
+        qs = queryset
         if product:
+            if not queryset:
+                qs = Product.objects.all()
             qs = qs.filter(id=product.id)
         for cls in plugin_classes:
-            qs = cls.product_queryset(qs)
-        qs = qs.order_by('title')
+            if cls not in self.disabled:
+                qs = cls.product_queryset(qs)
         return qs
 
     def get_row(self, product):

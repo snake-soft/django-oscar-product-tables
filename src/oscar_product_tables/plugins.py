@@ -17,7 +17,8 @@ class FieldsPluginBase:
     """
     cell_class = None
 
-    def __init__(self, rows):
+    def __init__(self, rows, read_only=False):
+        self.read_only = read_only
         self.code = self.cell_class.type
         self.objects = self.get_objects()
         self.cols = [*self.get_cols()]
@@ -33,7 +34,8 @@ class FieldsPluginBase:
         for row in rows:
             for col in self.cols:
                 obj = self.get_obj(row, col)
-                cell = self.cell_class(row=row, col=col, obj=obj)
+                cell = self.cell_class(
+                    row=row, col=col, obj=obj, read_only=self.read_only)
                 row.add_cell(cell)
         return rows
 

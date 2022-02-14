@@ -1,0 +1,39 @@
+{% load form_tags %}
+{% load i18n %}
+{% load static %}
+{% load display_datatype_filters %}
+{% load currency_filters %}
+
+{% for row in table.rows %}
+  <tr data-productid="{{ row.product.id }}">
+    {% for cell in row.cells %}
+      {% if cell.code == 'upc' %}
+        <th>
+          <a href="{% if request.user.is_superuser %}{% url 'dashboard:catalogue-product' row.product.id %}{% else %}{{ row.product.get_absolute_url }}{% endif %}" target="__blank">
+            {{ cell.data|display }}
+          </a>
+        </th>
+      {% elif cell.enabled %}
+        <td {% if cell.code == 'title' %}  style="white-space:normal;"{% endif %}{% if cell.read_only %} class="read_only"{% else %} onclick="getForm($(this));"{% endif %}>
+          {{ cell.data|display }}
+        </td>
+      {% else %}
+        <td style="color:#eee;cursor:no-drop;">n/a</td>
+      {% endif %}
+    {% endfor %}
+  </tr>
+{% endfor %}
+{% if page.has_next %}
+  <tr hx-get="{{ request.path }}?page={{ page.next_page_number }}" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></tr>
+  <script>
+    var progressbar = $('#producttable-progress').find('.progress-bar')
+    progressbar.css('width', '{{ progress }}%');
+    progressbar.attr('aria-valuenow', '{{progress}}');
+    progressbar.find('#progress-label').html('{{ progress }}');
+  </script>
+{% else %}
+  <script>
+    $('#producttable-progress').remove();
+    $('#producttable').show();
+  </script>
+{% endif %}
