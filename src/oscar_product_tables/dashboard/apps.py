@@ -15,34 +15,38 @@ class ProductTablesDashboardConfig(OscarDashboardConfig):
         from . import views
         self.product_table_view = views.ProductTableView
         self.product_table_view_ajax = views.ProductTableAjaxView
-
+        self.product_table_data_view = views.ProductTableDataView
 
     def get_urls(self):
         urls =[
             path(
-                'product_table/',
+                '',
                 self.product_table_view.as_view(),
                 name='product-table'
             ),
             path(
-                'product_table/<slug:slug>/',
+                '<slug:slug>/',
                 self.product_table_view.as_view(),
                 name='product-table'
             ),
 
             # Trick to set product_id and slug later:
             path(
-                'product_table/',
+                '',
                 self.product_table_view_ajax.as_view(),
                 name='product-table-ajax'
             ),
             path(
-                'product_table/<int:product_id>/<slug:code>/',
+                '<int:product_id>/<slug:code>/',
                 self.product_table_view_ajax.as_view()
             ),
             path(
-                'product_table/<int:product_id>/<slug:code>/<slug:action>/',
+                '<int:product_id>/<slug:code>/<slug:action>/',
                 self.product_table_view_ajax.as_view()
+            ),
+            path(
+                'json/<slug:slug>/',
+                self.product_table_data_view.as_view()
             ),
         ]
         return self.post_process_urls(urls)
