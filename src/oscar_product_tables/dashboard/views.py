@@ -1,4 +1,4 @@
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateView, View
 from django.views.generic.edit import FormView
 from django.core.paginator import Paginator
 from oscar_product_tables.forms import ProductFieldForm
@@ -6,6 +6,10 @@ from oscar.core.loading import get_model
 from oscar_product_tables.plugins import *
 from ..forms import TableConfigForm
 from ..table import Table
+from django.http.response import JsonResponse
+from django.utils.safestring import mark_safe
+import json
+from django.contrib.sites.models import Site
 
 Product = get_model('catalogue', 'Product')
 Category = get_model('catalogue', 'Category')
@@ -18,7 +22,7 @@ class GetTableMixin:
     template_name = 'product_tables/dashboard/product_table.html'
     template_name_table = 'product_tables/table.html'
     template_name_table_page = 'product_tables/table_page.html'
-    paginate_by = 1000
+    paginate_by = 9999999999999
     categories = []
 
     def get_plugin_classes(self):
@@ -32,6 +36,15 @@ class GetTableMixin:
         return []
 
     def get_read_only_plugins(self):
+        site = Site.objects.get_current()
+        if site and hasattr(site, 'configuration'):
+            mode = site.configuration.product_table_mode
+            plugins = [*self.get_plugin_classes()]
+            if mode == 20:
+                plugins = []
+            elif mode == 10:
+                plugins.remove(PartnerFieldsPlugin)
+            return plugins
         return []
 
     def get_table(self, **additional_kwargs):
@@ -49,6 +62,8 @@ class GetTableMixin:
         return kwargs
 
     def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['table_enabled'] = bool(self.categories)
         if self.categories:
             qs = self.get_queryset().filter(categories__in=self.categories).distinct()
         else:
@@ -56,7 +71,6 @@ class GetTableMixin:
         paginator = Paginator(qs, self.paginate_by)
         site_nr = self.request.GET.get('page', 1)
         page = paginator.page(site_nr)
-        context = super().get_context_data(**kwargs)
         context['table'] = self.get_table(queryset=page.object_list)
         context['page'] = page
         context['progress'] = int(page.number / page.paginator.num_pages * 100)
@@ -135,3 +149,35 @@ class ProductTableAjaxView(GetTableMixin, FormView):
                 self.table = self.get_table()
                 return self.get(request, product_id, code, *args, **kwargs)
         return super().post(request, *args, **kwargs)
+
+
+class ProductTableDataView(GetTableMixin, View):
+    """ Table content as Json, currently unused """
+    http_method_names = ['get']
+    paginate_by = None
+
+    @staticmethod
+    def clean(value):
+        result = value
+        if isinstance(value, (type(None), bool)):
+            result = {
+                True: '<i class="fas fa-check text-success"></i>',
+                False: '<i class="fas fa-times text-danger"></i>',
+                None: '',
+            }[value]
+        return mark_safe(str(result))
+
+    def build_json(self, rows):
+        data = []
+        for row in rows:
+            row_dict = {'productid': row.product.id}
+            #row_dict.update({cell.code: self.clean(cell.data) for cell in row.cells})
+            row_dict.update({cell.code: self.clean(cell.data) for cell in row.cells})
+            data.append(row_dict)
+        return data#json.dumps(data)
+
+    def get(self, request, *args, **kwargs):
+        additional_kwargs = {'queryset': Product.objects.browsable_dashboard()}
+        table = self.get_table(**additional_kwargs)
+        json_data = self.build_json(table.rows)
+        return JsonResponse({'data': json_data})

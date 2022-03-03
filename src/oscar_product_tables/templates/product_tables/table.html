@@ -6,44 +6,51 @@
 
 {% block extrahead %}
   <script src="https://unpkg.com/htmx.org@1.6.1" integrity="sha384-tvG/2mnCFmGQzYC1Oh3qxQ7CkQ9kMzYjWZSNtrRZygHPDDqottzEJsqS4oUVodhW" crossorigin="anonymous"></script>
+  <style>
+  #producttable td:hover{
+    text-decoration: underline;
+    background-color: #f7f7f7;
+    cursor:pointer;
+  }
+  #producttable td, #producttable{
+    white-space:nowrap;
+    border-right: 1px dotted lightgrey;
+  }
+  #producttable td.read_only{
+    cursor:no-drop;
+    text-decoration: unset;
+  }
+  #producttable_length{
+    float: right;
+  }
+  #producttable_filter input{
+    background-color: white;
+    margin-right: 1rem;
+  }
+  </style>
 {% endblock %}
 
-<style>
-#producttable td:hover{
-  text-decoration: underline;
-  background-color: #f7f7f7;
-  cursor:pointer;
-}
-#producttable td{
-  white-space:nowrap;
-  border-right: 1px dotted lightgrey;
-}
-#producttable td.read_only{
-  cursor:no-drop;
-  text-decoration: unset;
-}
-</style>
+{% block layout %}
+  <div class="col-12 mb-5" style="min-height:100px">
+    <form class="float-left position-absolute" style="z-index: 10;">
+      <table>
+        {{ form.as_table }}
+      </table>
+    </form>
 
-<form>
-  <table>
-    {{ form.as_table }}
-  </table>
-</form>
-
-<div id="producttable-progress" class="progress"  style="height: 3px;">
-  <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%">
+    {% if table_enabled %}
+      <table id="producttable" class="table table-hover table-sm table-responsive-md">
+        <thead>
+          <tr class="sticky-top bg-light">
+            {% for col in table.cols %}
+              <th style="position: sticky;" scope="col" data-code="{{ col.code }}">{{ col.name }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% include './table_page.html' %}
+        </tbody>
+      </table>
+    {% endif %}
   </div>
-</div>
-
-<table id="producttable" class="table table-hover table-sm table-responsive-md" style="display:none;">
-  <thead>
-    <tr class="sticky-top bg-light">
-      {% for col in table.cols %}
-        <th style="position: sticky;" scope="col" data-code="{{ col.code }}">{{ col.name }}</th>
-      {% endfor %}
-    </tr>
-  </thead>
-  <tbody>
-    {% include './table_page.html' %}
-  </tbody>
-</table>
+{% endblock %}
