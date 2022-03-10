@@ -1,15 +1,16 @@
+import json
 from django.views.generic.base import TemplateView, View
 from django.views.generic.edit import FormView
 from django.core.paginator import Paginator
+from django.http.response import JsonResponse
+from django.utils.safestring import mark_safe
+from django.contrib.sites.models import Site
+from django.conf import settings
 from oscar_product_tables.forms import ProductFieldForm
 from oscar.core.loading import get_model
 from oscar_product_tables.plugins import *
 from ..forms import TableConfigForm
 from ..table import Table
-from django.http.response import JsonResponse
-from django.utils.safestring import mark_safe
-import json
-from django.contrib.sites.models import Site
 
 Product = get_model('catalogue', 'Product')
 Category = get_model('catalogue', 'Category')
@@ -22,7 +23,7 @@ class GetTableMixin:
     template_name = 'product_tables/dashboard/product_table.html'
     template_name_table = 'product_tables/table.html'
     template_name_table_page = 'product_tables/table_page.html'
-    paginate_by = 9999999999999
+    paginate_by = getattr(settings, 'PRODUCT_TABLES_PAGINATE_BY', 9999999999999)
     categories = []
 
     def get_plugin_classes(self):

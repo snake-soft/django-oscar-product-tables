@@ -26,14 +26,29 @@
 {% if page.has_next %}
   <tr hx-get="{{ request.path }}?page={{ page.next_page_number }}" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></tr>
   <script>
-    var progressbar = $('#producttable-progress').find('.progress-bar')
-    progressbar.css('width', '{{ progress }}%');
-    progressbar.attr('aria-valuenow', '{{progress}}');
-    progressbar.find('#progress-label').html('{{ progress }}');
+    $(document).ready(function() {
+      var progressbar = $('#producttable-progress').find('.progress-bar')
+      progressbar.css('width', '{{ progress }}%');
+      progressbar.attr('aria-valuenow', '{{progress}}');
+      progressbar.find('#progress-label').html('{{ progress }}');
+    });
   </script>
 {% else %}
   <script>
-    $('#producttable-progress').remove();
-    $('#producttable').show();
+    $(document).ready(function() {
+        $('#producttable').DataTable({
+          pageLength: 25,
+          order: [],
+          language: {
+              searchPlaceholder: "Search records"
+          },
+          lengthMenu: [ [25, 100, 250, 500, -1], [25, 100, 250, 500, "Alle"] ],
+            search: {
+                return: true
+            },
+        });
+        $('#producttable-progress').remove();
+        $('#producttable').show();
+      });
   </script>
 {% endif %}

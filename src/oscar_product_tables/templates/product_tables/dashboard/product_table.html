@@ -21,22 +21,6 @@
     	var ajaxFormUrl="{% url 'product_tables_dashboard:product-table-ajax' %}";
     	var ajaxFormSubmitUrl="{{ request.path}}";
     </script>
-    <script>
-        $(document).ready(function() {
-            $('#producttable').DataTable({
-              pageLength: 25,
-              order: [],
-              language: {
-                  searchPlaceholder: "Search records"
-              },
-              lengthMenu: [ [25, 100, 250, 500, -1], [25, 100, 250, 500, "Alle"] ],
-                search: {
-                    return: true
-                },
-            });
-            
-          });
-    </script>
 {% endblock %}
 
 {% block breadcrumbs %}

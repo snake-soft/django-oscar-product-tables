@@ -32,14 +32,16 @@
 
 {% block layout %}
   <div class="col-12 mb-5" style="min-height:100px">
-    <form class="float-left position-absolute" style="z-index: 10;">
+    <form class="float-left" style="z-index: 10;">
       <table>
         {{ form.as_table }}
       </table>
     </form>
-
+    <div id="producttable-progress" class="progress col-12 p-0"  style="height: 3px;">
+      <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%"></div>
+    </div>
     {% if table_enabled %}
-      <table id="producttable" class="table table-hover table-sm table-responsive-md">
+      <table id="producttable" class="table table-hover table-sm table-responsive-md" style="display:none;">
         <thead>
           <tr class="sticky-top bg-light">
             {% for col in table.cols %}
@@ -48,7 +50,7 @@
           </tr>
         </thead>
         <tbody>
-          {% include './table_page.html' %}
+          <tr hx-get="{{ request.path }}?page=1" hx-trigger="load" hx-target="this" hx-swap="outerHTML"></tr>
         </tbody>
       </table>
     {% endif %}
